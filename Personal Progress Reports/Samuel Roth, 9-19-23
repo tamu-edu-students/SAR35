@@ -1,0 +1,12 @@
+Good afternoon Omar,
+
+My subsystem is GPS and Motor Control
+
+ - Currently working to get the GPS module to talk with Raspberry Pi
+ - Having issues with accessing the GPIO pins from the Pi operating system
+ - Plan is to be able to read from the GPIO pins by next week and hopefully have the GPS module talking with PI, if all goes well
+
+I will make these progress reports as short and to the point as possible. However, please let me know if you want/need more info.
+
+Respectfully,
+Samuel Roth
