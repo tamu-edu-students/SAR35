@@ -1,0 +1,12 @@
+Good afternoon Omar,
+
+My subsystem is GPS and Motor Control
+
+ - Last week: I was able to get the GPS unit to talk with the Raspberry Pi.
+ - Problems: The GPS is not retrieving a location lock. I have ordered a new module that should work better.
+ - Goal: By next week, I want to get the new GPS module connected. I also want to get the motor control program set up to handle input data.
+
+I will make these progress reports as short and to the point as possible. However, please let me know if you want/need more info.
+
+Respectfully,
+Samuel Roth
