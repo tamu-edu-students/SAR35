@@ -1,0 +1,12 @@
+Good afternoon Omar,
+
+My subsystem is GPS and Motor Control
+
+Last week: I was able to start experimentation with the new GPS module. The new module was able to obtain a GPS location lock. For the motor control, I have set up the program to read movement data from an input file.
+Problems: I am unable to successfully decode the GPS data into usable longitude and latitude points.
+Goal: By next week (the week after fall break), I want to get the GPS data decoded and gather some sample data points to test the interpolation algorithm. Additionally, get preliminary motor control functionality. 
+
+I will make these progress reports as short and to the point as possible. However, please let me know if you want/need more info.
+
+Respectfully,
+Samuel Roth
