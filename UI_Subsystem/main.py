@@ -5,6 +5,9 @@ import csv
 import os
 from geographiclib.geodesic import Geodesic
 from geopy import distance
+import control
+#import pathfinding.pathfinding as pf
+#import pathfinding.BSLoop as bsloop
 
 '''
 
@@ -14,6 +17,9 @@ Author: Senran Castro
 Section: ECEN 403 - 903
 Group Number: 35
 Date Created: 09/01/23
+
+Version: 2.0.2
+Last Updated: 01/29/2024
 
 '''
 
@@ -49,11 +55,11 @@ class Application(tk.Frame):
         ############# VARIABLES ############
         global rover_num, rover_list, rover_icon, obstacle_icon, surv_pin_list, obstacle_list
         rover_num = 1
-        rover_icon = ImageTk.PhotoImage(Image.open("./rover_icon.png").resize((50, 50)))
+        rover_icon = ImageTk.PhotoImage(Image.open("./images/rover_icon.png").resize((50, 50)))
         rover_list = [map_widget.set_marker(0,0), map_widget.set_marker(0,1, icon=rover_icon, text="Rover 1"), map_widget.set_marker(1,0, icon=rover_icon, text="Rover 2")]
         surv_pin_list = []
         obstacle_list = []
-        obstacle_icon = ImageTk.PhotoImage(Image.open("./obstacle_icon.png").resize((50,50)))
+        obstacle_icon = ImageTk.PhotoImage(Image.open("./images/obstacle_icon.png").resize((50,50)))
 
         global waypoint_list1, position_list1, pos_list_copy1, wayp_index1, delete_path1
         global waypoint_list2, position_list2, pos_list_copy2, wayp_index2, delete_path2
@@ -149,11 +155,11 @@ class Application(tk.Frame):
             survivor_count.config(text="Number of Survivors Found: "+str(survivor_num))
 
         def create_surv_image():
-            image_pil = Image.open('./blank_surv_img.jpg')
+            image_pil = Image.open('./images/blank_surv_img.jpg')
             image_pil = image_pil.resize((290, 170))
 
             #add survivor picture from image recognition files
-            surv_pic = Image.open('./surv_pic'+str(survivor_num)+'.jpg') #test sample for now
+            surv_pic = Image.open('./im_rec_folder/surv_pic'+str(survivor_num)+'.jpg') #test sample for now
             surv_pic = surv_pic.resize((124, 170))
             offset = (0, 0)
             image_pil.paste(surv_pic, offset)
@@ -169,7 +175,7 @@ class Application(tk.Frame):
             else: im_draw.text((162,44), gender_text[0], font=im_font, fill="#2C2C2C") #gender
             if status_text[survivor_num]: im_draw.text((173,75), status_text[survivor_num], font=im_font, fill="#2C2C2C") #condition
             else: im_draw.text((173,75), status_text[0], font=im_font, fill="#2C2C2C") #condition
-            image_pil.save("./surv_img"+str(survivor_num)+".jpg")
+            image_pil.save("./images/surv_img"+str(survivor_num)+".jpg")
             surv_image = ImageTk.PhotoImage(image_pil)
             return surv_image
 
@@ -178,7 +184,7 @@ class Application(tk.Frame):
             age_text = ["???"]
             gender_text = ["???"]
             status_text = ["???"]
-            with open("./surv_data.csv", mode='r') as file:
+            with open("./im_rec_folder/surv_data.csv", mode='r') as file:
                 surv_data_file = csv.reader(file, delimiter=',')
                 for line in surv_data_file:
                     j_counter = 0
@@ -201,7 +207,7 @@ class Application(tk.Frame):
                 i.delete()
                 del i
             #update new list from file
-            with open("./obstacle_locations.csv", mode = "r") as obst_file:
+            with open("./path_folder/obstacle_locations.csv", mode = "r") as obst_file:
                 obstacle_loc_file = csv.reader(obst_file, delimiter=",")
                 for i in obstacle_loc_file:
                     coordinates = []
@@ -229,6 +235,7 @@ class Application(tk.Frame):
             global new_pin, rover_num, reset, path_rover_select
 
             #ADD CALL FOR PATHFINDING
+            #path_rover_select = bsloop.roverBoundaries(rover_list[1].position, rover_list[2].position, new_pin.position)
             #test calculation for now
             dist1 = calc_distance(rover_list[1].position, new_pin.position)
             dist2 = calc_distance(rover_list[2].position, new_pin.position)
@@ -339,10 +346,10 @@ class Application(tk.Frame):
             print("creating new paths...")
             #check for file change
             if (path_file_change or setup == 1):
-                print("file change found")
+                print("path file change found")
                 call_path_creation() #takes values from pathfinding system for path creation
             else:
-                print("no file change found")
+                print("no path file change found")
                 if ((made_file_path1 == 0) or wayp_index1!=0):
                     path_list1 = pos_list_copy1
                 if ((made_file_path2 == 0) or wayp_index2!=0):
@@ -357,7 +364,7 @@ class Application(tk.Frame):
                     new_path1.set_position_list(path_list1)
                     made_path1 = 1
                     #write the path to the csv
-                    with open('new_path1.csv', mode='w')as file:
+                    with open('./path_folder/new_path1.csv', mode='w')as file:
                         pin_file = csv.writer(file)
                         for i in new_path1.position_list:
                             written = [1, i[0], i[1]]
@@ -381,7 +388,7 @@ class Application(tk.Frame):
                     new_path2.set_position_list(path_list2)
                     made_path2 = 1
                     #write the path to the csv
-                    with open('new_path2.csv', mode='w')as file:
+                    with open('./path_folder/new_path2.csv', mode='w')as file:
                         pin_file = csv.writer(file)
                         for i in new_path2.position_list:
                             written = [2, i[0], i[1]]
@@ -404,7 +411,7 @@ class Application(tk.Frame):
             global path_list1, path_list2, file_path_change1, file_path_change2
             path_temp_list1 = [rover_list[1].position]
             path_temp_list2 = [rover_list[2].position]
-            with open('test_path.csv', mode='r') as file: #file name will be from pathfinding system
+            with open('./path_folder/test_path.csv', mode='r') as file: #file name will be from pathfinding system
                 pathfinding_path_file = csv.reader(file, delimiter=",")
                 for i in pathfinding_path_file:
                     temp_rov_num = 0
@@ -594,7 +601,6 @@ class Application(tk.Frame):
     pass
 
     def reload(self):
-        # Rover speed = 0.5 mph = 0.22352 meter/s
         ############ VARIABLES ############
         global n1, made_move_path1, move_path1, step_dist1, rov_speed2, time1, initial1, initial2, initial3, initial4, initial5, setup, written1
         global n2, made_move_path2, move_path2, step_dist2, rov_speed1, time2, frequency, path_file_change, load_counter, reset_reload, test_dist
@@ -724,7 +730,7 @@ class Application(tk.Frame):
         def update_rov_loc():
             global rover_list
             #read location file
-            with open("./rover_locations.csv", mode = "r") as rov_file:
+            with open("./gps_folder/rover_locations.csv", mode = "r") as rov_file:
                 rover_loc_file = csv.reader(rov_file, delimiter=",")
                 for line in rover_loc_file:
                     temp_rover_num = 0
@@ -831,34 +837,34 @@ class Application(tk.Frame):
             return index1, index2
         
         def read_rov_loc_file():
-            with open("./rover_locations.csv", mode='r') as file:
+            with open("./gps_folder/rover_locations.csv", mode='r') as file:
                 read_file = file.readlines()
                 return read_file
 
         def read_path_file():
-            with open("test_path.csv", "r") as file:
+            with open("./path_folder/test_path.csv", "r") as file:
                 read_file = file.readlines()
                 return read_file
         
         def read_obst_file():
-            with open("obstacle_locations.csv") as file:
+            with open("./path_folder/obstacle_locations.csv") as file:
                 read_file = file.readlines()
                 return read_file
         
         def read_surv_data_file():
-            with open("./surv_data.csv", mode= 'r') as file:
+            with open("./im_rec_folder/surv_data.csv", mode= 'r') as file:
                 read_file = file.readlines()
                 return read_file
 
         def read_surv_loc_file():
-            with open("survivor_locations.csv") as file:
+            with open("./im_rec_folder/survivor_locations.csv") as file:
                 read_file = file.readlines()
                 return read_file
 
         def process_surv_loc_file():
             if (surv_pin_list != []):
                 clear_survivors()
-            with open("./survivor_locations.csv", mode='r') as file:
+            with open("./im_rec_folder/survivor_locations.csv", mode='r') as file:
                 file1 = csv.reader(file, delimiter=",")
                 for i in file1:
                     coordinates = []
@@ -873,7 +879,7 @@ class Application(tk.Frame):
         def process_surv_data_file():
             global survivor_num, surv_pin_list
             if (surv_pin_list != []):
-                with open("./surv_data.csv", mode='r') as file:
+                with open("./im_rec_folder/surv_data.csv", mode='r') as file:
                     file1 = csv.reader(file, delimiter=',')
                     counter = 0
                     temp_survivor_num = survivor_num
@@ -890,7 +896,7 @@ class Application(tk.Frame):
         if (move_call1 or move_call2):
             n1, n2 = move(n1, n2)
             if (n1 == 10) or (n1==50):
-                with open('./obstacle_locations.csv', mode = 'w') as file:
+                with open('./path_folder/obstacle_locations.csv', mode = 'w') as file:
                     obst_file = csv.writer(file, delimiter=',')
                     written1.append((float(split_coordinates(rover_list[1].position, (30.6134483,-96.3428987), test_dist)[0]), float(split_coordinates(rover_list[1].position, (30.6134483,-96.3428987), test_dist)[1])))
                     for i in written1:
@@ -898,25 +904,25 @@ class Application(tk.Frame):
 
         #initial setup
         if (setup == 1):
-            with open("rover_locations.csv", mode='w') as file:
+            with open("./gps_folder/rover_locations.csv", mode='w') as file:
                 test_file = csv.writer(file)
                 setup_list = [[1,30.613575804804412,-96.3435304019127],[2,30.613078103382605,-96.3431230235076]]
                 test_file.writerows(setup_list)
             update_rov_loc()
-            with open("test_path.csv", mode='w') as file:
+            with open("./path_folder/test_path.csv", mode='w') as file:
                 test_file = csv.writer(file)
                 setup_list = [[1,30.6136630,-96.3431937],[1,30.6136814,-96.3429041]]
                 test_file.writerows(setup_list)
             path_file_change = 1
-            with open("survivor_locations.csv", mode='w') as file:
+            with open("./im_rec_folder/survivor_locations.csv", mode='w') as file:
                 test_file = csv.writer(file)
                 setup_list = [[30.6136814,-96.3429041]]
                 test_file.writerows(setup_list)
-            with open("surv_data.csv", mode='w') as file:
+            with open("./im_rec_folder/surv_data.csv", mode='w') as file:
                 test_file = csv.writer(file)
                 setup_list = [['Female','20-25','Bad']]
                 test_file.writerows(setup_list)
-            with open("obstacle_locations.csv", mode='w') as file:
+            with open("./path_folder/obstacle_locations.csv", mode='w') as file:
                 test_file = csv.writer(file)
                 setup_list = [[]]
                 test_file.writerows(setup_list)
@@ -930,7 +936,7 @@ class Application(tk.Frame):
             initial5 = read_rov_loc_file()
             setup = 0
         
-        #test change the files
+        '''#test change the files
         if (load_counter == 20):
             with open("test_path.csv", mode='w') as file:
                 test_file = csv.writer(file)
@@ -954,7 +960,7 @@ class Application(tk.Frame):
             #reset to beginning
             load_counter = 0
             reset_reload = 1
-
+        '''
         #check if file changed 
         current1 = read_path_file()
         current2 = read_obst_file()
@@ -985,6 +991,7 @@ class Application(tk.Frame):
 
         #test printing
         print("loaded")
+        control.output_zip_file()
 
         #reload the system
         load_counter += 1
@@ -1029,18 +1036,18 @@ class Window(tk.Toplevel):
         if 'setup2' not in globals():
             setup2 = 0
         if 'initial_1' not in globals():
-            initial_1 = os.path.getmtime("./video_pic1.jpg")
+            initial_1 = os.path.getmtime("./im_rec_folder/video_pic1.jpg")
         if 'initial_2' not in globals():
-            initial_2 = os.path.getmtime("./video_pic2.jpg")
+            initial_2 = os.path.getmtime("./im_rec_folder/video_pic2.jpg")
 
-        current_1 = os.path.getmtime("./video_pic1.jpg")
-        current_2 = os.path.getmtime("./video_pic2.jpg")
+        current_1 = os.path.getmtime("./im_rec_folder/video_pic1.jpg")
+        current_2 = os.path.getmtime("./im_rec_folder/video_pic2.jpg")
         ###################################
 
         if (rover_num==1):
             #setup initial picture
             if (setup1==0):
-                img_pil1 = Image.open("video_pic1.jpg")
+                img_pil1 = Image.open("./im_rec_folder/video_pic1.jpg")
                 img_pil1 = img_pil1.resize((290,170))
                 vid_image1 = ImageTk.PhotoImage(img_pil1)
                 feed_image1 = feed_canvas1.create_image(7,7,anchor=tk.NW,image=vid_image1)
@@ -1048,7 +1055,7 @@ class Window(tk.Toplevel):
             #check if image changed and reload it
             if (initial_1 != current_1):
                 feed_canvas1.delete(feed_image1)
-                img_pil1 = Image.open("video_pic1.jpg")
+                img_pil1 = Image.open("./im_rec_folder/video_pic1.jpg")
                 img_pil1 = img_pil1.resize((290,170))
                 vid_image1 = ImageTk.PhotoImage(img_pil1)
                 feed_image1 = feed_canvas1.create_image(7,7,anchor=tk.NW,image=vid_image1)
@@ -1056,7 +1063,7 @@ class Window(tk.Toplevel):
         else:
             #setup initial picture
             if (setup2==0):
-                img_pil2 = Image.open("video_pic2.jpg")
+                img_pil2 = Image.open("./im_rec_folder/video_pic2.jpg")
                 img_pil2 = img_pil2.resize((290,170))
                 vid_image2 = ImageTk.PhotoImage(img_pil2)
                 feed_image2 = feed_canvas2.create_image(7,7,anchor=tk.NW,image=vid_image2)
@@ -1064,20 +1071,20 @@ class Window(tk.Toplevel):
             #check if image changed and reload it
             if (initial_2 != current_2):
                 feed_canvas2.delete(feed_image2)
-                img_pil2 = Image.open("video_pic2.jpg")
+                img_pil2 = Image.open("./im_rec_folder/video_pic2.jpg")
                 img_pil2 = img_pil2.resize((290,170))
                 vid_image2 = ImageTk.PhotoImage(img_pil2)
                 feed_image2 = feed_canvas2.create_image(7,7,anchor=tk.NW,image=vid_image2)
                 initial_2 = current_2
 
         #test change the images
-        img1 = Image.open("./video_pic1.jpg")
+        img1 = Image.open("./im_rec_folder/video_pic1.jpg")
         img1_alt = Image.open("./video_pic1_alternate.jpg")
-        img1_alt.save("./video_pic1.jpg")
+        img1_alt.save("./im_rec_folder/video_pic1.jpg")
         img1.save("./video_pic1_alternate.jpg")
 
-        os.rename("./video_pic2.jpg", "./video_pic2_.jpg")
-        os.rename("./video_pic2_alternate.jpg", "./video_pic2.jpg")
+        os.rename("./im_rec_folder/video_pic2.jpg", "./video_pic2_.jpg")
+        os.rename("./video_pic2_alternate.jpg", "./im_rec_folder/video_pic2.jpg")
         os.rename("./video_pic2_.jpg", "./video_pic2_alternate.jpg")
 
         reload_counter += 1
@@ -1095,5 +1102,5 @@ window.columnconfigure(1, weight=1)
 app = Application(master=window)
 
 ####### MAIN LOOP #######
-window.mainloop()
+app.mainloop()
 #########################
