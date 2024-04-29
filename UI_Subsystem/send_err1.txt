@@ -1,2 +1,0 @@
-ERROR SENDING FILE TO ROVER 1: [WinError 10061] No connection could be made because the target machine actively refused it. 
-Files will not be sent. Please fix the error before starting movement.
